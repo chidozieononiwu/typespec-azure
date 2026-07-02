@@ -615,6 +615,8 @@ getHealthStatus(
 @@clientLocation(CommonTypes.SubscriptionIdParameter.subscriptionId, get); // This will keep the `subscriptionId` parameter on the operation level instead of applying TCGC's default logic of elevating `subscriptionId` to client.
 ```
 
+> **Warning:** When `@clientLocation` is applied to a templated parameter and the template is instantiated with different types, all instances share the same parameter name but carry different types. Moving these to the same client produces a `client-location-conflict` diagnostic because the client cannot expose a single parameter with multiple conflicting types. To resolve this, apply `@clientLocation` on each operation's parameter individually instead of on the shared template parameter, so each operation's copy keeps its own type.
+
 ### `@clientName` {#@Azure.ClientGenerator.Core.clientName}
 
 Overrides the generated name for client SDK elements including clients, methods, parameters,
