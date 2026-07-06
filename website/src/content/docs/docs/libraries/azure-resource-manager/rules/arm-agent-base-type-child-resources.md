@@ -14,7 +14,10 @@ Resources decorated with `@azureBaseType` for the Agent base type must have both
 @armProviderNamespace
 namespace Microsoft.Contoso;
 
-model MyAgentProperties is Azure.ResourceManager.BaseTypes.Agents.AgentPropertiesPlatform {
+model MyAgentDefinition is Azure.ResourceManager.BaseTypes.Agents.AgentDefinitionPlatform;
+
+model MyAgentProperties
+  is Azure.ResourceManager.BaseTypes.Agents.AgentPropertiesPlatform<MyAgentDefinition> {
   ...DefaultProvisioningStateProperty;
 }
 
@@ -30,7 +33,10 @@ model MyAgent is TrackedResource<MyAgentProperties> {
 @armProviderNamespace
 namespace Microsoft.Contoso;
 
-model MyAgentProperties is Azure.ResourceManager.BaseTypes.Agents.AgentPropertiesPlatform {
+model MyAgentDefinition is Azure.ResourceManager.BaseTypes.Agents.AgentDefinitionPlatform;
+
+model MyAgentProperties
+  is Azure.ResourceManager.BaseTypes.Agents.AgentPropertiesPlatform<MyAgentDefinition> {
   ...DefaultProvisioningStateProperty;
 }
 
