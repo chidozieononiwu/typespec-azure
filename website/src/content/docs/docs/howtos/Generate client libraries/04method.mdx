@@ -1689,6 +1689,10 @@ func (client *Client) Get(ctx context.Context, options *ClientGetOptions) (*Resp
 
 The `@clientLocation` decorator allows you to explicitly move parameters between client and operation levels.
 
+:::caution
+When you move a parameter up to a client with `@clientLocation`, every operation that contributes that parameter must give it the same type. Moving multiple parameters that share a name but have different types to the same client reports a `client-location-conflict` warning and produces a broken client. This commonly happens when `@clientLocation` is applied to a templated parameter that is instantiated with different types across operations. In that case, give the parameter the same type on every operation, or move it on each operation individually instead of through the shared template, so that it has a consistent type on the client.
+:::
+
 ### Moving subscriptionId from client to operation level
 
 In ARM services, `subscriptionId` is automatically elevated to the client level. By applying `@clientLocation` to `subscriptionId` and explicitly moving it to an operation, you can move it back down to the method-level.
@@ -1815,6 +1819,12 @@ The `@override` decorator takes a target operation and a custom operation that d
 ```
 
 When applied, the method parameters come from the override operation while the underlying HTTP operation remains unchanged. TCGC maps method parameters to operation parameters based on name matching.
+
+Because parameters are matched **by name** rather than by position, the override operation may list the parameters in a different order, regroup them into a model, or add new parameters — TCGC still aligns each parameter with the original parameter that shares its name. Every required parameter of the original operation must have a matching parameter in the override; optional parameters may be omitted.
+
+:::caution
+Path parameters must be preserved. If a parameter is a path parameter (`@path`) in the original operation, the override operation must also declare it as a path parameter. Dropping `@path` from a path parameter reports an `override-parameters-mismatch` error, because a path parameter is required to build the request URL and cannot be removed or demoted on the client. (This check is skipped when an override parameter uses `@clientLocation`, since that signals an intentional relocation of the parameter.)
+:::
 
 ### Simple parameter customization
 

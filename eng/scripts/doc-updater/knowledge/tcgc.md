@@ -121,6 +121,8 @@ namespace (@clientNamespace), naming (@clientName), overload, structure (@client
 - `operation-not-in-client`: REMOVED in May 2026. This diagnostic no longer exists.
 - `inconsistent-multiple-service-dependency` (warning): Emitted when services merged into the same client depend on different versions of a shared library dependency. Documented in 03client.mdx under the "One Client from Multiple Services" section and in guideline.md under "Client Detection".
 - `legacy-hierarchy-building-conflict` (warning): Now only has `property-type-mismatch` message ID (the old `property-missing` and `type-mismatch` message IDs were removed). Emitted during property reconciliation when a dropped property's type is incompatible with the same-named property on the new base chain.
+- `override-parameters-mismatch` (error): Besides the existing "override has different parameters than the original" case, it is now ALSO emitted when the `@override` operation drops `@path` from a parameter that is realized as a path parameter in the original operation's route. Skipped when any override parameter carries `@clientLocation`. A parameter that has `@path` in the type graph but is NOT realized as a path parameter in the route (e.g. an ARM scope model property, or a `@path` property inside a body model) does NOT trigger it. Also, override parameters are now matched to the original operation's parameters BY NAME (not sorted position), so overrides may add/remove/reorder parameters without a false mismatch. Documented in 04method.mdx `@override` "Basic usage".
+- `client-location-conflict` / messageId `parameterTypeConflict` (warning): Emitted when `@clientLocation` moves multiple parameters that share a name but have different types to the same client. Common cause: `@clientLocation` on a templated parameter (e.g. inside a templated alias) that is instantiated with different types across operations. Reported once per distinct syntax node. Documented in 04method.mdx under "Using `@clientLocation` to control parameter placement".
 
 ## External Type Usage Propagation
 
@@ -233,3 +235,18 @@ namespace (@clientNamespace), naming (@clientName), overload, structure (@client
 - No Spector spec was added for this feature — it's a code-generation-time config behavior, not a wire-level behavior. The unit tests in `test/package/api-versions-metadata.test.ts` and `test/clients/structure.test.ts` thoroughly cover it.
 - The guideline.md was updated to document `SdkPackage.metadata` (both `apiVersion` and `apiVersions`).
 - The 10versioning.mdx was updated to mention the Record form and add a "Per-service versioning (multi-service packages)" section.
+
+## @override & @clientLocation Validation (July 2026)
+
+- `@override` parameter matching changed from sorted-position to **name-based**. Overrides may add, remove, or reorder parameters and TCGC still pairs each override param with the original param of the same name. Required original params must have a match; optional ones may be omitted.
+- `@override` now enforces **path parameter preservation**: dropping `@path` from a realized path parameter reports `override-parameters-mismatch` (error). Escape hatch: putting `@clientLocation` on an override param skips the check. The "realized in the route" nuance (type-graph `@path` vs actual route path) is an internal robustness detail; user docs just say "path params must stay path params".
+- `@clientLocation` now warns (`client-location-conflict` / `parameterTypeConflict`) when same-named params of different types are moved to one client — typically a templated param inside a templated alias.
+- These are all **compile-time diagnostics** (an error and a warning), not wire-level behavior, so NO new Spector specs are needed. `override` and `client-location` Spector specs already exist.
+- Doc edits were confined to `04method.mdx` (both changes live there: `@override` section + the "Using `@clientLocation` to control parameter placement" section). 03client.mdx covers operation/client hierarchy, not param-level clientLocation.
+
+## Environment / Workflow Notes (July 2026)
+
+- In the doc-updater runtime, `pnpm` is NOT installed and the `core` submodule is NOT built → `pnpm regen-docs`, package builds, and language emitters are all INFEASIBLE. Do NOT edit `lib/*.tsp` doc comments in such a run (they can't be regenerated, and editing generated reference docs directly is forbidden). Prefer updating the howto `.mdx` docs instead.
+- Root `node_modules` DOES exist (e.g. `./node_modules/.bin/prettier` and `.../tsx` resolve), but `pnpm format` / `pnpm format:dir` fail because `.prettierrc.json` loads `./core/packages/prettier-plugin-typespec/dist/index.js`, which isn't built. Workaround for formatting markdown/knowledge files: `./node_modules/.bin/prettier --no-config --print-width 100 --tab-width 2 --end-of-line lf --prose-wrap preserve --parser markdown --write <file>` (mirrors the repo's base prettier options without the typespec plugin).
+- The website package (`@azure-tools/typespec-azure-website`) is `private: true`, so documentation-only edits under `website/` need NO chronus changeset. The source-code commits being documented already carry their own changesets (e.g. `tcgc-fixPathInOverride`, `tcgc-override-match-params-by-name`, `tcgc-override-realized-path`, `clientLocation-param-type-collision`).
+- `tsx` IS available under `eng/scripts/doc-updater/node_modules/.bin`, so `update-meta.ts` runs from that folder even without a global pnpm/node_modules.
