@@ -233,3 +233,12 @@ namespace (@clientNamespace), naming (@clientName), overload, structure (@client
 - No Spector spec was added for this feature — it's a code-generation-time config behavior, not a wire-level behavior. The unit tests in `test/package/api-versions-metadata.test.ts` and `test/clients/structure.test.ts` thoroughly cover it.
 - The guideline.md was updated to document `SdkPackage.metadata` (both `apiVersion` and `apiVersions`).
 - The 10versioning.mdx was updated to mention the Record form and add a "Per-service versioning (multi-service packages)" section.
+
+## @override and @clientLocation Validation (July 2026)
+
+- `@override` matches override parameters to original parameters **by name**, not by position. The override may add, remove (optional only), or reorder parameters. Sorting by position produced false `override-parameters-mismatch` diagnostics and was removed (`src/decorators.ts`, `$override`).
+- Every required original parameter must have a name-matching override parameter, or `override-parameters-mismatch` is reported.
+- `@override` now warns (`override-parameters-mismatch`) when the original parameter is a **realized path parameter** but the matching override parameter drops `@path`. "Realized" is key: a param can carry `@path` in the type graph (e.g. inside a body model, or a templated ARM scope model) without being a path param in the operation's actual route. Use `getRealizedPathParamNames` (resolves the HTTP route via `getHttpOperation`) rather than `isPathParam` alone; fall back to `isPathParam` when the route can't be resolved (non-HTTP ops).
+- The `@path` check is skipped when any override parameter carries `@clientLocation` (intentional pass-through customization).
+- `@clientLocation` new validation (`validateClientLocationParameterTypes` in `src/validations/types.ts`): moving multiple parameters that share the same name but have different types to the same client (namespace/interface) reports `client-location-conflict` with messageId `parameterTypeConflict`. Common cause: `@clientLocation` on a templated parameter instantiated with different types per operation. Fix: move the parameter per-operation so it keeps a consistent type. Diagnostic is reported once per distinct syntax node.
+- These are validation constraints (edge behavior), documented as `:::note`/`:::caution` admonitions in the `@override` and `@clientLocation` sections of `04method.mdx` rather than new ClientTabs examples.

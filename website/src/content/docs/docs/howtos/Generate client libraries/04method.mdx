@@ -1689,6 +1689,10 @@ func (client *Client) Get(ctx context.Context, options *ClientGetOptions) (*Resp
 
 The `@clientLocation` decorator allows you to explicitly move parameters between client and operation levels.
 
+:::caution
+When you move a parameter up to a client (a namespace or interface), all parameters moved to that client that share the same name must also share the same type. This most often goes wrong when `@clientLocation` is applied to a templated parameter (for example on an alias) that is instantiated with a different type on each operation: moving all of them to the same client would produce conflicting client parameters that share a name but differ in type, resulting in a broken SDK. In that case TCGC reports a `client-location-conflict` diagnostic (`parameterTypeConflict`). To fix it, apply `@clientLocation` to the parameter on each operation individually so it keeps a consistent type on the client.
+:::
+
 ### Moving subscriptionId from client to operation level
 
 In ARM services, `subscriptionId` is automatically elevated to the client level. By applying `@clientLocation` to `subscriptionId` and explicitly moving it to an operation, you can move it back down to the method-level.
@@ -1814,7 +1818,13 @@ The `@override` decorator takes a target operation and a custom operation that d
 @@override(OriginalOperation, CustomOperation, "python"); // Language-specific
 ```
 
-When applied, the method parameters come from the override operation while the underlying HTTP operation remains unchanged. TCGC maps method parameters to operation parameters based on name matching.
+When applied, the method parameters come from the override operation while the underlying HTTP operation remains unchanged. TCGC maps method parameters to operation parameters based on name matching, so the override operation is free to add, remove (optional parameters only), or reorder parameters relative to the original operation — the two signatures do not need to list parameters in the same order.
+
+:::note
+Every required parameter of the original operation must have a matching override parameter (by name). If a required original parameter is missing from the override, TCGC reports an `override-parameters-mismatch` diagnostic.
+
+Additionally, if a parameter is realized as a path parameter (`@path`) in the original operation's route, the matching override parameter must also be marked `@path`. Dropping `@path` in the override reports an `override-parameters-mismatch` diagnostic, because a path parameter cannot be turned into a non-path parameter without changing the underlying HTTP request. The only exception is when the override uses `@clientLocation` (see below), which signals an intentional customization where non-path parameters are pass-throughs.
+:::
 
 ### Simple parameter customization
 
