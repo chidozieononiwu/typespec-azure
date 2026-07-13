@@ -109,3 +109,15 @@ All standard envelope properties (`EntityTagProperty`, `ExtendedLocationProperty
 - `deprecation.tsp`: The ExtensionResourceBase deprecation message must say "Foundations.ExtensionResource" (not "ProxyResource").
 - `arm-legacy-operations-discourage` rule was removed from linter registration; its rule doc file and linter.md entry should not exist.
 - Knowledge base: The reason for using `ArmCustomPatchSync` in docs is "because that is the recommendation, based on the requirements of the ARM RPC" — NOT "to avoid the suppress complexity".
+
+## Experimental Agent Base Types
+
+The library ships an experimental **base types** feature under `lib/base-types/` (`base-types.tsp`, `agent.tsp`), exposed in the `Azure.ResourceManager.BaseTypes` and `Azure.ResourceManager.BaseTypes.Agents` namespaces.
+
+- `@azureBaseType(#{ baseType, version })` marks a resource properties/model as implementing a base type (`BaseTypeInfo` = `{ baseType, version }`). Applying it in a user namespace (not `Azure.ResourceManager*`) emits the `basetypes-experimental` **warning** — usage sites must add `#suppress "@azure-tools/typespec-azure-resource-manager/basetypes-experimental" "Experimental BaseTypes"`.
+- Resource templates: `Agent<Properties>` (TrackedResource, applies `@azureBaseType` automatically for `"Agent"`/`"2024-06-01"`), `AgentConversation<Properties, AgentResource>` and `AgentResponse<Properties, AgentResource>` (ProxyResource children via `@parentResource`).
+- Property base models come in **Appliance** (service-owned, read-only) and **Platform** (client-owned, writable) variants: `AgentDefinitionAppliance/Platform<HasModelDeploymentRef=false, HasInstructions=false>`, `AgentPropertiesAppliance/Platform<AgentDefinitionType>`. `baseTypes` is always ARM-managed/read-only. `AgentDefinition`/`AgentProperties` are `internal` constraint-only models.
+- Child property base models: `ConversationProperties`, `ResponseProperties`; mix-ins `PreviousResponseProperty`, `ResponseOutputProperty`, `ResponseInstructionsProperty`, `InputTypeProperty`.
+- Two new linting rules (registered in `src/linter.ts`, in the default ruleset): `arm-agent-base-type-child-resources` (an Agent must have both a Conversation and a Response child) and `arm-agent-base-type-lifecycle-operations` (those children need create/read/update/delete). Their rule doc files already exist under `rules/` and are listed in the auto-generated `reference/linter.md`.
+- Canonical sample: `packages/samples/specs/resource-manager/resource-types/agent/main.tsp`. The how-to guide is `website/src/content/docs/docs/howtos/ARM/agent-base-types.mdx`.
+- Reference docs (`reference/decorators.md`, `data-types.md`, `linter.md`, `index.mdx`) already include `@azureBaseType`, `BaseTypeInfo`, and the two rules — no manual edit needed; regen with `pnpm regen-docs` only after touching `.tsp` doc comments.

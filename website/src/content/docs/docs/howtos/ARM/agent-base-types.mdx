@@ -1,0 +1,124 @@
+---
+title: Agent Base Types
+description: Defining ARM Agent resources with the experimental Azure Resource Manager base types
+llmstxt: true
+---
+
+import { ExampleRef } from "@components/sample";
+
+:::caution
+Azure Resource Manager base types are **experimental** and may be subject to breaking changes.
+Using the `@azureBaseType` decorator (directly or through the `Agent` template) emits a
+`@azure-tools/typespec-azure-resource-manager/basetypes-experimental` warning that you must
+suppress at the usage site.
+:::
+
+The Azure Resource Manager library provides base types that describe a shared schema contract a
+resource conforms to. The **Agent** base type models an AI agent resource together with its
+required `Conversation` and `Response` child resources. The base type templates and models live in
+the `Azure.ResourceManager.BaseTypes` and `Azure.ResourceManager.BaseTypes.Agents` namespaces.
+
+## Deployment Models
+
+Every agent-related base type ships in two variants that describe who owns the configuration:
+
+- **Appliance** — the service (resource provider) owns and reports the configuration, so the
+  definition and properties are read-only.
+- **Platform** — the client owns and manages the configuration, so the fields are writable.
+
+Pick the variant that matches your deployment model when spreading or extending the base models.
+
+## Defining the Agent Definition
+
+An agent definition describes the model and behavior of the agent. Extend the appliance or platform
+definition base model. The boolean template parameters control which optional fields are present:
+
+```typespec
+// Appliance definition: read-only fields managed by the service
+model ContosoApplianceDefinition is AgentDefinitionAppliance<true, true>;
+
+// Platform definition: writable fields managed by the client
+model ContosoPlatformDefinition is AgentDefinitionPlatform<true, true>;
+```
+
+`AgentDefinitionAppliance` and `AgentDefinitionPlatform` both accept
+`HasModelDeploymentRef` and `HasInstructions` (both default `false`) that toggle the
+`modelDeploymentRef` and `instructions` properties.
+
+## Defining the Agent Properties
+
+Extend `AgentPropertiesAppliance` or `AgentPropertiesPlatform` with your agent definition type and
+add a provisioning state property:
+
+```typespec
+model ContosoApplianceAgentProperties is AgentPropertiesAppliance<ContosoApplianceDefinition> {
+  ...DefaultProvisioningStateProperty;
+}
+```
+
+## Defining the Agent Resource
+
+Use the `Agent` template to create a tracked resource. It applies the Agent base type descriptor
+automatically, so you must suppress the experimental warning:
+
+```typespec
+#suppress "@azure-tools/typespec-azure-resource-manager/basetypes-experimental" "Experimental BaseTypes"
+model ContosoApplianceAgent is Agent<ContosoApplianceAgentProperties> {
+  ...ResourceNameParameter<ContosoApplianceAgent>;
+}
+```
+
+## Defining the Required Child Resources
+
+An Agent resource must declare both a `Conversation` and a `Response` proxy child resource,
+otherwise the `arm-agent-base-type-child-resources` linting rule fires. Use the `AgentConversation`
+and `AgentResponse` templates, passing your properties model and the parent agent resource:
+
+```typespec
+model ContosoConversationProperties is ConversationProperties {
+  ...DefaultProvisioningStateProperty;
+}
+
+model ContosoResponseProperties is ResponseProperties {
+  ...PreviousResponseProperty;
+  ...DefaultProvisioningStateProperty;
+}
+
+model ApplianceConversation is AgentConversation<
+  ContosoConversationProperties,
+  ContosoApplianceAgent
+> {
+  ...ResourceNameParameter<ApplianceConversation>;
+}
+
+model ApplianceResponse is AgentResponse<ContosoResponseProperties, ContosoApplianceAgent> {
+  ...ResourceNameParameter<ApplianceResponse>;
+}
+```
+
+## Adding Lifecycle Operations
+
+The `Conversation` and `Response` child resources must define create, read, update, and delete
+operations. Omitting any of them triggers the `arm-agent-base-type-lifecycle-operations` linting
+rule:
+
+```typespec
+@armResourceOperations
+interface ApplianceConversations {
+  get is ArmResourceRead<ApplianceConversation>;
+  createOrUpdate is ArmResourceCreateOrReplaceAsync<ApplianceConversation>;
+  update is ArmCustomPatchSync<
+    ApplianceConversation,
+    Azure.ResourceManager.Foundations.ResourceUpdateModel<
+      ApplianceConversation,
+      ContosoConversationProperties
+    >
+  >;
+  delete is ArmResourceDeleteWithoutOkAsync<ApplianceConversation>;
+  listByAgent is ArmResourceListByParent<ApplianceConversation>;
+}
+```
+
+## Full Example
+
+<ExampleRef path="resource-manager/resource-types/agent" collapsed />
