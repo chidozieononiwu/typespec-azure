@@ -114,7 +114,9 @@ namespace (@clientNamespace), naming (@clientName), overload, structure (@client
 - InitializedByFlags documentation was incomplete — added Individually, Parent, CustomizeCode descriptions.
 - The `CustomizeCode` (4) flag means initialization is omitted from generated code and handled manually.
 - `serializationOptions` on SdkModelType properties was already documented. Now also documented on `SdkBodyParameter` and `SdkHttpResponseBase` in the HTTP Operation Parameters and Response sections.
+- `serializationOptions` is now an optional property on `SdkArrayType` and `SdkDictionaryType` too (July 2026). It is ONLY populated when the array/dict is a named model carrying explicit serialization decorators, e.g. `@Xml.name("Foo") model Foo is Bar[];` or `@encodedName`. Anonymous inline arrays/dicts leave it `undefined` (the wrapping name comes from the referencing property/model). Documented in guideline.md under Collection Types. Note: on `SdkArrayType`/`SdkDictionaryType` the field is optional (`?`) and may be undefined, unlike on models/properties where it is always present — emitters must null-check it.
 - `baseModel` property on SdkModelType is not documented in guideline.md but exists in interfaces.ts.
+- Incremental run (July 2026) also reviewed: (a) the `@clientLocation` + `@client` different-scope duplicate-operation fix in `src/validations/types.ts` — internal validation bugfix, no user-facing behavior change to document; (b) deprecation of `SdkTestLibrary`/`createTestLibrary` in `src/testing/index.ts` in favor of `createTester` — internal test infra, not documented; (c) a test-only `#suppress` cleanup. None required doc changes beyond the collection serialization note above.
 
 ## Diagnostics
 
