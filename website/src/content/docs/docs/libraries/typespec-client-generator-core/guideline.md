@@ -144,6 +144,8 @@ export async function $onEmit(context: EmitContext<SdkEmitterOptions>) {
 
 Emitters can get first-level clients of a client package from `SdkPackage.clients`. An [`SdkClientType`](../reference/js-api/interfaces/sdkclienttype/) represents a client in the package. Emitters can use `SdkClientType.children` to get nested sub clients, and use `SdkClientType.parent` to trace back.
 
+`SdkClientType.versionsEnum` provides a reference to the [`SdkEnumType`](../reference/js-api/interfaces/sdkenumtype/) that represents the Versions enum for the client's service. This is useful for mixed api-version scenarios where different clients in the same package target different version enums. The field is `undefined` when the service is not versioned.
+
 `SdkClientType.clientInitialization` tells emitters how to initialize the client. [`SdkClientInitializationType`](../reference/js-api/interfaces/sdkclientinitializationtype/) contains info about the client's initialization parameters and how the client can be initialized, controlled by the `initializedBy` flags:
 
 - `Individually` (1): The client can be instantiated directly by the user.
