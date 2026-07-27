@@ -258,3 +258,16 @@ namespace (@clientNamespace), naming (@clientName), overload, structure (@client
 ## Feedback Lessons (PR #4683)
 
 - In versioning (and any API-version) examples, use realistic **date-based** api-version identifiers (e.g. `2024-01-01`, enum members like `v2024_01_01: "2024-01-01"`) — NOT placeholder names like `av1`/`bv1`. Human reviewers rewrote placeholder versions to date-based ones. Keep the enum member name and its string value consistent (e.g. `v2024_05_01: "2024-05-01"`).
+
+## Collection Type Serialization Options (#3978)
+
+- `SdkArrayType` and `SdkDictionaryType` now have an **optional** `serializationOptions?: SerializationOptions` field (see `interfaces.ts`). Previously only `SdkModelType`/`SdkModelPropertyType` had non-optional `serializationOptions`.
+- It is populated **only** when the array/dict is a named model with explicit serialization decorators, e.g. `@Xml.name("Foo") model Foo is Bar[];` or `@encodedName("application/xml", "...") model Foo is Record<Bar>;`. Anonymous inline arrays/dicts leave it `undefined` (wrapping name comes from the referencing property/model).
+- Implementation: `setSerializationOptions(context, type, [])` is called for array/dict in `updateSerializationOptions` with an empty content-type list so only explicitly-defined info is captured. The setter functions now use optional chaining (`type.serializationOptions?.json`) and lazily initialize via `type.serializationOptions ??= {}`.
+- Documented in `guideline.md` under "Collection Types". No Spector spec needed — this is a type-graph shape detail exercised by unit tests (`test/types/serialization-options.test.ts`).
+
+## Non-Doc-Impacting Change Patterns (for triage)
+
+- **Validation false-positive fixes** (e.g. `@clientLocation` + scoped `@client` no longer colliding, #4850 in `validations/types.ts`) are internal correctness fixes with no user-facing behavior change — no doc update needed.
+- **Test-infra deprecations** (e.g. `SdkTestLibrary` deprecated in favor of `createTester` from `@typespec/compiler/testing`, in `src/testing/index.ts`) — no user/emitter docs reference `SdkTestLibrary`, so no doc change needed.
+- **Test-only diffs** (removing redundant `#suppress`, etc.) never need doc changes.
