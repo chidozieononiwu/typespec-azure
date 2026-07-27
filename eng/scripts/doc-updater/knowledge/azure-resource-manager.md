@@ -109,3 +109,36 @@ All standard envelope properties (`EntityTagProperty`, `ExtendedLocationProperty
 - `deprecation.tsp`: The ExtensionResourceBase deprecation message must say "Foundations.ExtensionResource" (not "ProxyResource").
 - `arm-legacy-operations-discourage` rule was removed from linter registration; its rule doc file and linter.md entry should not exist.
 - Knowledge base: The reason for using `ArmCustomPatchSync` in docs is "because that is the recommendation, based on the requirements of the ARM RPC" — NOT "to avoid the suppress complexity".
+
+## Agent Base Types (Experimental)
+
+A new **experimental** base-types feature lives in `lib/base-types/` (`base-types.tsp`, `agent.tsp`), namespaces `Azure.ResourceManager.BaseTypes` and `Azure.ResourceManager.BaseTypes.Agents`. Key facts:
+
+- `@azureBaseType(baseType: valueof BaseTypeInfo)` marks a resource-properties model as implementing a base type. May be applied multiple times; duplicates ignored. Applying it (directly or via the `Agent` template) emits the `basetypes-experimental` warning for models outside `Azure.ResourceManager*`; user specs must `#suppress "@azure-tools/typespec-azure-resource-manager/basetypes-experimental" "..."`.
+- `BaseType` is an **extensible (open) union** with members `Agent: "Agent"` and `Relationship: "Relationship"`. `BaseTypeInfo { baseType: BaseType; version: string }`. Use `BaseType.Agent`, not the string `"Agent"`.
+- Two deployment models differing only in visibility: **Appliance** = read-only (service-owned) — `AgentDefinitionAppliance`, `AgentPropertiesAppliance`, `AgentToolTypeAppliance`; **Platform** = writable (client-owned) — `AgentDefinitionPlatform`, `AgentPropertiesPlatform`, `AgentToolTypePlatform`. `baseTypes` is always read-only/ARM-managed.
+- `AgentDefinition{Appliance,Platform}<HasModelDeploymentRef extends valueof boolean = false, HasInstructions extends valueof boolean = false>` — both params default `false`; `true` adds optional `modelDeploymentRef`/`instructions`. Omit params equal to default in examples.
+- `Agent<Properties extends AgentProperties> is TrackedResource<Properties>` applies `@azureBaseType(#{ baseType: BaseType.Agent, version: "2024-06-01" })` automatically.
+- Child resources: `AgentConversation<Properties extends ConversationProperties, AgentResource extends Foundations.Resource>` and `AgentResponse<Properties extends ResponseProperties, AgentResource>` — both `ProxyResource`, both `@parentResource(AgentResource)`.
+- `ConversationProperties` has only read-only `createdAt?: utcDateTime` (no `conversationId`). `ResponseProperties` has read-only `createdAt`, `model?`, read-only `status?: ResponseStatus`, and required-on-create `input: ConversationItem` (no `responseId`). Mix-ins: `PreviousResponseProperty` (`previousResponseId`), `ResponseInstructionsProperty` (`instructions`), `ResponseOutputProperty` (`output: ResponseItem[]`).
+- Items are discriminated on `type: ItemType` (`Message`/`FunctionCall`/`FunctionCallOutput`/`Compaction`); messages carry `role: MessageRole` (`Developer`/`User`/`Assistant`/`Tool`). Models: `ConversationItem`, `ResponseItem` (was `ResponseOutputItem`). `ResponseStatus` is an `@lroStatus` union with PascalCase values (`Completed`/`Failed`/`Cancelled`/`Incomplete`/`Queued`/`InProgress`) — `createdAt` is `utcDateTime` (not unixTimestamp).
+- Two rules enforce structure: `arm-agent-base-type-child-resources` (Agent must have both Conversation + Response children) and `arm-agent-base-type-lifecycle-operations` (those children need create/read/update/delete). Rule doc files + `reference/linter.md` already list them.
+- Canonical sample: `packages/samples/specs/resource-manager/resource-types/agent/main.tsp` (uses `@armCommonTypesVersion(...Versions.v5)`, `DefaultProvisioningStateProperty`, `ArmTagsPatchSync` on the Agent, and `ArmCustomPatchSync` with `Foundations.ResourceUpdateModel<...>` on the children).
+- How-to guide added at `howtos/ARM/agent-base-types.md`.
+
+## Other Feature Additions
+
+- `Extension.ServiceGroup<ParameterName extends valueof string = "serviceGroupName">` is a new extension scope target (`@tenantResource @armVirtualResource("Microsoft.Management")`, segment `serviceGroups`). Already documented in `resource-type.mdx` including a migration section from the old `Extension.ExternalResource` alias. Extension operation doc-comment example lists now include `Extension.ServiceGroup`.
+- Feature-file decorators added: `@featureFiles(features: Enum)`, `@featureFileOptions`, `@featureFile`, plus `ArmFeatureFileOptions` model. New rule `arm-feature-file-usage-discourage` (discourages `@featureFiles`, brownfield-only). `arm-custom-resource-usage-discourage` now respects `@suppress` directives on the custom-resource model/base/source models.
+- New rule `no-reserved-resource-property` (registered `noReservedResourcePropertyRule`): reserved property names in the resource property bag, matched case-insensitively. Currently reserves `billingData`. Rule doc file already exists.
+- `ArmTopParameter.top`, `ArmFilterParameter.filter`, `ArmSkipParameter.skip` are now **optional** (`top?`/`filter?`/`skip?`).
+- `common-types/customer-managed-keys-ref.tsp` was consolidated/deleted; `common-types.tsp` now imports `./customer-managed-keys.tsp`. No public model signature change.
+- `AzureResourceManagerTestLibrary` (in `src/testing/index.ts`) is `@deprecated` — use `createTester` from `@typespec/compiler/testing`.
+
+## Reference Docs Already Regenerated at Commit Time
+
+For this run, the feature commits already included regenerated `reference/*` files and hand-written rule doc files for all new symbols/rules. When verifying, the on-disk reference docs matched the final `lib/**/*.tsp` state, so no `regen-docs` diff was expected. (regen-docs still could not be run here because the full workspace dependency graph was not built — sibling packages like `@typespec/compiler` had no `dist`.)
+
+## Environment Limitation (this run)
+
+The doc-updater sandbox had no network/registry access (`pnpm`/`corepack` downloads failed with SSL errors) and sibling workspace packages were unbuilt, so `pnpm build`, `pnpm regen-docs`, `pnpm format`, and `pnpm change add` could not be run. Markdown was formatted with the bundled `prettier` (without the typespec plugin). New TSP code fences were copied verbatim from the canonical sample to stay format-clean.
