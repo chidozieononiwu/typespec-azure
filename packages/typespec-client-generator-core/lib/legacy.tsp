@@ -300,8 +300,13 @@ extern dec nextLinkVerb(target: Operation, verb: "GET" | "POST", scope?: valueof
  * maintaining backward compatibility in existing services. New services should use
  * standard TypeSpec patterns for default values.
  *
+ * The type of the value passed must match the scalar type of the property. For example,
+ * a numeric value must be used on a numeric property and a string value on a string property.
+ * A `client-default-value-type-mismatch` warning is emitted when the types do not match.
+ * If `@alternateType` is present, the value is validated against the alternate type instead.
+ *
  * @param target The model property or operation parameter that should have a client-level default value
- * @param value The default value to be used by SDK generators (must be a string, number, or boolean literal)
+ * @param value The default value to be used by SDK generators (must be a string, number, or boolean literal whose type matches the property type)
  * @param scope Specifies the target language emitters that the decorator should apply.
  * If not set, the decorator will be applied to all language emitters by default.
  * You can use "!" to exclude specific languages, for example: !(java, python) or !java, !python.

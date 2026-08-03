@@ -1236,6 +1236,11 @@ This decorator is considered legacy functionality and should only be used for
 maintaining backward compatibility in existing services. New services should use
 standard TypeSpec patterns for default values.
 
+The type of the value passed must match the scalar type of the property. For example,
+a numeric value must be used on a numeric property and a string value on a string property.
+A `client-default-value-type-mismatch` warning is emitted when the types do not match.
+If `@alternateType` is present, the value is validated against the alternate type instead.
+
 ```typespec
 @Azure.ClientGenerator.Core.Legacy.clientDefaultValue(value: valueof string | boolean | numeric, scope?: valueof string)
 ```
@@ -1249,7 +1254,7 @@ The model property or operation parameter that should have a client-level defaul
 
 | Name  | Type                                   | Description                                                                                                                                                                                                                                                     |
 | ----- | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| value | `valueof string \| boolean \| numeric` | The default value to be used by SDK generators (must be a string, number, or boolean literal)                                                                                                                                                                   |
+| value | `valueof string \| boolean \| numeric` | The default value to be used by SDK generators (must be a string, number, or boolean literal whose type matches the property type)                                                                                                                              |
 | scope | `valueof string`                       | Specifies the target language emitters that the decorator should apply.<br />If not set, the decorator will be applied to all language emitters by default.<br />You can use "!" to exclude specific languages, for example: !(java, python) or !java, !python. |
 
 #### Examples
