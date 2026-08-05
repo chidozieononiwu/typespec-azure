@@ -1,0 +1,114 @@
+---
+title: Relationship Base Type
+description: Defining ARM Relationship extension resources that establish connections between ARM resources
+---
+
+:::caution
+The Relationship base type is **experimental**. Its shape may change in future versions of the
+`@azure-tools/typespec-azure-resource-manager` library. Applying `@azureBaseType` (directly or
+through the `Relationship` template) in a provider namespace emits the `basetypes-experimental`
+warning, which you must explicitly suppress while the feature is experimental.
+:::
+
+A _Relationship_ is an ARM base type: a structured contract that an extension resource conforms to
+in order to establish a connection between a source ARM resource and a target ARM resource. The
+library provides the `Relationship<Properties>` extension-resource template together with the
+`RelationshipProperties` base model that carries the required source/target identifiers. These live
+in the `Azure.ResourceManager.BaseTypes.Relationships` namespace.
+
+```typespec
+using Azure.ResourceManager.BaseTypes.Relationships;
+```
+
+## Relationship properties
+
+Every relationship resource must include the four required identifiers (`sourceId`, `sourceTenant`,
+`targetId`, `targetTenant`) and a read-only `provisioningState`. Derive your properties model from
+`RelationshipProperties` to inherit these fields automatically:
+
+```typespec
+model MyRelationshipProperties is RelationshipProperties {
+  /** RP-specific metadata about the relationship. */
+  description?: string;
+}
+```
+
+`RelationshipProperties` accepts an optional `ProvisioningState` type parameter when you need
+custom provisioning-state values:
+
+```typespec
+@Azure.Core.lroStatus
+union MyProvisioningState {
+  ResourceProvisioningState,
+  Accepted: "Accepted",
+  string,
+}
+
+model MyRelationshipProperties is RelationshipProperties<ProvisioningState = MyProvisioningState> {
+  description?: string;
+}
+```
+
+## Defining the relationship resource
+
+The `Relationship<Properties>` template creates an ARM `ExtensionResource` and automatically
+applies the `@azureBaseType` decorator for the Relationship base type. Suppress the experimental
+warning and add a `ResourceNameParameter`:
+
+```typespec
+#suppress "@azure-tools/typespec-azure-resource-manager/basetypes-experimental" "Experimental BaseTypes"
+model MyRelationship is Relationship<MyRelationshipProperties> {
+  ...ResourceNameParameter<
+    Resource = MyRelationship,
+    KeyName = "relationshipName",
+    SegmentName = "myRelationships",
+    NamePattern = "^[a-zA-Z0-9_.-]{1,64}$"
+  >;
+}
+```
+
+## Defining relationship operations
+
+Relationship resources are extension resources, so their operations use the `Extension` namespace.
+Define an interface parameterized by the scope:
+
+```typespec
+interface MyRelationshipOps<Scope extends Azure.ResourceManager.Foundations.SimpleResource> {
+  get is Extension.Read<Scope, MyRelationship>;
+  create is Extension.CreateOrReplaceAsync<Scope, MyRelationship>;
+  update is Extension.CustomPatchAsync<
+    Scope,
+    MyRelationship,
+    Azure.ResourceManager.Foundations.ResourceUpdateModel<MyRelationship, MyRelationshipProperties>
+  >;
+  delete is Extension.DeleteWithoutOkAsync<Scope, MyRelationship>;
+  list is Extension.ListByTarget<Scope, MyRelationship>;
+}
+
+/** Operations over any source scope. */
+@armResourceOperations
+interface MyRelationships extends MyRelationshipOps<Extension.ScopeParameter> {}
+```
+
+## Linter rule
+
+The
+[`use-relationship-required-properties`](/docs/libraries/azure-resource-manager/rules/use-relationship-required-properties)
+rule enforces that resources decorated with `@azureBaseType` for the Relationship base type extend
+`RelationshipProperties` and use the `Relationship` template. Using `@azureBaseType` directly with
+a custom properties model that does not extend `RelationshipProperties` will trigger this rule.
+
+## Applying `@azureBaseType` directly
+
+The `Relationship` template applies `@azureBaseType` automatically. If you need to declare
+base-type conformance directly, use the `BaseType` enum:
+
+```typespec
+@azureBaseType(#{ baseType: BaseType.Relationship, version: "2026-04-01" })
+model MyRelationshipProperties is RelationshipProperties;
+```
+
+## Complete example
+
+For a full working specification, see the
+[Relationship Base Type sample](https://github.com/Azure/typespec-azure/tree/main/packages/samples/specs/resource-manager/resource-types/relationship).
