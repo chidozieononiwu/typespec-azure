@@ -124,3 +124,22 @@ The library provides an experimental **Agent** base type in `lib/base-types/agen
 - How-to guide added: `website/src/content/docs/docs/howtos/ARM/agent-base-type.mdx`.
 - The ARM howtos sidebar is auto-generated from the directory (`current-sidebar.ts` → `autogenerate` on `howtos`), so new how-to files need no manual sidebar registration.
 - Reference docs (`reference/*.md`) for these lib additions were already regenerated in-commit; no `regen-docs` diff was needed for this batch.
+
+## Relationship Base Type (Experimental)
+
+The library provides an experimental **Relationship** base type in `lib/base-types/relationship.tsp` (namespace `Azure.ResourceManager.BaseTypes.Relationships`). Key facts:
+
+- `Relationship<Properties extends RelationshipProperties>` is an `ExtensionResource` template that applies `@azureBaseType(#{ baseType: BaseType.Relationship, version: "2026-04-01" })` automatically. Suppress `basetypes-experimental` when using it.
+- `RelationshipProperties<ProvisioningState extends string = ResourceProvisioningState>` supplies the required schema: read-only `baseTypes`, `sourceId`, `sourceTenant`, `targetId`, `targetTenant`, and read-only `provisioningState`. Derive RP-specific property bags from it.
+- Because relationships are extension resources, define operations with the `Extension` templates (`Extension.Read`, `Extension.CreateOrReplaceAsync`, `Extension.CustomPatchAsync`, `Extension.DeleteWithoutOkAsync`, `Extension.ListByTarget`) and route at scope via `Extension.ScopeParameter`.
+- New linting rule `use-relationship-required-properties` (registered in `src/linter.ts`): Relationship base-type resources must be extension resources and include the required schema properties (`sourceId, sourceTenant, targetId, targetTenant, provisioningState`).
+- Canonical sample: `packages/samples/specs/resource-manager/resource-types/relationship/main.tsp`.
+- How-to guide added: `website/src/content/docs/docs/howtos/ARM/relationship-base-type.mdx`.
+
+## Agent Base Type Version
+
+The Agent base type contract version was bumped from `2024-06-01` to `2026-04-01` (commit "Fix Agent base type contract version"). Any doc example applying `@azureBaseType` for the Agent base type must use `version: "2026-04-01"`. The `agent-base-type.mdx` direct-apply example was updated accordingly.
+
+## arm-resource-operation Rule Split
+
+The `arm-resource-operation` lint rule was split into three focused rules: `use-api-version`, `use-interface`, and `use-operation-decorator`. The old `arm-resource-operation` rule/doc no longer exists. `arm-rules.md` and `rpc-guidelines-coverage.md` already reference the three replacement rules (updated in-commit).
