@@ -292,3 +292,17 @@ namespace (@clientNamespace), naming (@clientName), overload, structure (@client
 ## Diagnostic Messages Externalized (July 2026)
 
 - Diagnostic message definitions were moved out of `src/lib.ts` into individual `src/diagnostics/<name>.md` files (loaded at build). Purely an authoring refactor; reference docs regenerate the same content. No user-facing doc action.
+
+## New C# Linter Rules: csharp-model-suffix & csharp-use-standard-acronyms (Aug 2026)
+
+- Two rules added to `src/linter.ts` (both `rules` and `csharpRules` arrays): `csharpModelSuffixRule` (`csharp-model-suffix`) and `csharpUseStandardAcronymsRule` (`csharp-use-standard-acronyms`). Rule bodies + `.md` docs live in `src/rules/`.
+- `csharp-model-suffix`: recommends C# model suffixes — `Config` over `Options` (except client options), `Content` over `Request`, `Result` over `Response`. Checks the C#-resolved name and respects `@clientName`.
+- `csharp-use-standard-acronyms`: standard acronym casing for C# SDK names.
+- `reference/linter.md` already listed both rows at checkout (regen ran in the source PR). Individual `../rules/<name>.md` pages are NOT committed under `website/` — that relative link is resolved at site-build time from `src/rules/*.md`; same pattern as the pre-existing `csharp-no-url-suffix`/`require-client-suffix`. Do NOT try to create those pages.
+- TCGC linter rules are documented in the **reference** only — they are NOT mentioned in the `howtos/Generate client libraries/` pages. Do not add howto sections for individual C# naming rules.
+
+## @clientDefaultValue Type-Mismatch Diagnostic (Aug 2026)
+
+- New warning `client-default-value-type-mismatch` (`src/diagnostics/client-default-value-type-mismatch.md`), emitted from `$clientDefaultValue`'s `onTargetFinish` in `src/decorators.ts`. Fires when the literal default value's type is not assignable to the property/parameter type. When `@alternateType` is set (and not an external type), validation is against the alternate type instead.
+- Suppressible; the mismatched default is still applied to generated SDKs when suppressed.
+- Documented as a "Default Value Type Validation" subsection (with a `:::note` on suppression) in `08types.mdx`, right after the `@clientDefaultValue` "Language-Specific Scoping" section. No `<ClientTabs>` needed — it's a diagnostic, shown as a plain `typespec` example. No Spector coverage (error condition).
