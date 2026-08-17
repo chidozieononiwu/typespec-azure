@@ -292,3 +292,15 @@ namespace (@clientNamespace), naming (@clientName), overload, structure (@client
 ## Diagnostic Messages Externalized (July 2026)
 
 - Diagnostic message definitions were moved out of `src/lib.ts` into individual `src/diagnostics/<name>.md` files (loaded at build). Purely an authoring refactor; reference docs regenerate the same content. No user-facing doc action.
+
+## New C# Linter Rules (Aug 2026)
+
+- Two rules added to `src/linter.ts` (in both `all` and `best-practices:csharp` rulesets): `csharp-model-suffix` and `csharp-use-standard-acronyms`. Each has source (`src/rules/<name>.ts`) plus a co-located `.md` doc referenced via `fileRef`. `reference/linter.md` already lists them (regenerated in the same PR) — do NOT re-add table rows.
+- `csharp-model-suffix`: warns when a model's C# name ends with `Options`→suggest `Config`, `Request`→`Content`, `Response`→`Result`. Skips `*ClientOptions` and the standard `ErrorResponse` in `Azure.Core.Foundations`/`Azure.ResourceManager.CommonTypes`. Codefix inserts `@clientName("<Suggestion>", "csharp")`.
+- `csharp-use-standard-acronyms`: warns on non-standard acronym casing for enums/models/model properties, fixing `db`→`DB`, `ip`→`IP`, `os`→`OS` only when the acronym is a complete word boundary (regex `/(?:^ip|^db|^os|Ip|Db|Os)(?![a-z])/g`) so `Oslo`/`Ipsum` are untouched. Codefix inserts `@clientName(..., "csharp")`.
+- No user howto covers linter rules and there are no per-rule website pages (only the aggregate `reference/linter.md` + the src `.md` docs). Linter rules need no Spector coverage.
+
+## @clientDefaultValue Type Validation (Aug 2026)
+
+- `$clientDefaultValue` now returns an `onTargetFinish` hook that emits the new `client-default-value-type-mismatch` warning when the default value's type isn't assignable to the property/parameter type. If `@alternateType` is set on the same target, validation uses the alternate type instead. Diagnostic authored in `src/diagnostics/client-default-value-type-mismatch.md`.
+- Documented in the "Type Validation" subsection added to `08types.mdx` (Legacy Decorators → clientDefaultValue), including the `@alternateType` interaction and suppression note. The howto `@alternateType` heading anchor is `#using-alternatetype-to-reference-external-types`.
