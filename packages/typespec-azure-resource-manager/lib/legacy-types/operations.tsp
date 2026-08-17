@@ -162,7 +162,7 @@ interface RoutedOperations<
 
   /**
    * A synchronous resource Update (PATCH)
-   * @template Resource the resource being created or updated
+   * @template Resource the resource being updated
    * @template PatchModel the PATCH request model
    * @template Parameters Optional. Additional parameters after the path parameters
    * @template Response Optional. The success response(s) for the PATCH operation

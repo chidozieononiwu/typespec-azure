@@ -1770,8 +1770,8 @@ op Azure.ResourceManager.CommonTypes.NspConfigurationOperations<NspConfiguration
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | ParentResource       | the parent resource of the NspConfiguration                                                                              |
 | Request              | The request body type                                                                                                    |
-| Response             | The success response for the read operation                                                                              |
-| Resource             | the NspConfiguration resource being read                                                                                 |
+| Response             | The success response for the action operation                                                                            |
+| Resource             | the NspConfiguration resource being acted on                                                                             |
 | BaseParameters       | Optional. Allows overriding the operation parameters                                                                     |
 | KeyName              | Optional. The NSP configuration resource name parameter. By default, this is `networkSecurityPerimeterConfigurationName` |
 | Parameters           | Optional. Additional parameters after the path parameters                                                                |
@@ -1793,8 +1793,8 @@ op Azure.ResourceManager.CommonTypes.NspConfigurationOperations<NspConfiguration
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | ParentResource       | the parent resource of the NspConfiguration                                                                              |
 | Request              | The request body type                                                                                                    |
-| Response             | The success response for the read operation                                                                              |
-| Resource             | the NspConfiguration resource being read                                                                                 |
+| Response             | The success response for the action operation                                                                            |
+| Resource             | the NspConfiguration resource being acted on                                                                             |
 | BaseParameters       | Optional. Allows overriding the operation parameters                                                                     |
 | KeyName              | Optional. The NSP configuration resource name parameter. By default, this is `networkSecurityPerimeterConfigurationName` |
 | Parameters           | Optional. Additional parameters after the path parameters                                                                |
@@ -2733,7 +2733,7 @@ op Azure.ResourceManager.Legacy.RoutedOperations<ParentParameters, ResourceTypeP
 
 | Name                 | Description                                               |
 | -------------------- | --------------------------------------------------------- |
-| Resource             | the resource being created or updated                     |
+| Resource             | the resource being updated                                |
 | PatchModel           | the PATCH request model                                   |
 | Parameters           | Optional. Additional parameters after the path parameters |
 | Response             | Optional. The success response(s) for the PATCH operation |

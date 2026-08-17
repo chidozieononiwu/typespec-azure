@@ -124,3 +124,21 @@ The library provides an experimental **Agent** base type in `lib/base-types/agen
 - How-to guide added: `website/src/content/docs/docs/howtos/ARM/agent-base-type.mdx`.
 - The ARM howtos sidebar is auto-generated from the directory (`current-sidebar.ts` → `autogenerate` on `howtos`), so new how-to files need no manual sidebar registration.
 - Reference docs (`reference/*.md`) for these lib additions were already regenerated in-commit; no `regen-docs` diff was needed for this batch.
+
+## Relationship Base Type (Experimental)
+
+The library provides an experimental **Relationship** base type in `lib/base-types/relationship.tsp` (namespace `Azure.ResourceManager.BaseTypes.Relationships`):
+
+- `Relationship<Properties = RelationshipProperties>` is an `ExtensionResource` template that applies `@azureBaseType(#{ baseType: BaseType.Relationship, version: "2026-04-01" })` automatically.
+- `RelationshipProperties<ProvisioningState = ResourceProvisioningState>` has `baseTypes` (read-only, ARM-managed), `sourceId`, `sourceTenant`, `targetId`, `targetTenant`, and read-only `provisioningState`.
+- New linting rule `use-relationship-required-properties` (doc under `rules/`) enforces the required source/target properties.
+
+## Doc-comment copy-paste `@template` pitfalls
+
+When auditing operation-template doc comments, watch for copy-paste `@template` descriptions carried over from a different operation kind. Confirmed fixes in this batch:
+
+- `common-types/nsp-operations.tsp`: the `Action`/`ActionAsync` ops had `@template Response`/`@template Resource` text saying "read operation"/"being read" copied from a GET op — corrected to "action operation"/"being acted on".
+- `legacy-types/operations.tsp` `CustomPatchSync`: `@template Resource` said "created or updated" (copied from a PUT) — a PATCH op should say "being updated".
+- `decorators.tsp` `@armResourceDelete`: "for us in documentation" typo → "for use in documentation".
+
+After fixing any `lib/**/*.tsp` doc comment, re-run `pnpm regen-docs` and note it also rewrites the package root `README.md` (outside the ARM doc `allowedPaths`), so revert `README.md` if it is not in scope.

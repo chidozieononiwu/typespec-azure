@@ -195,8 +195,8 @@ interface NspConfigurationOperations<
    * Perform an action on a network security perimeter configuration for a particular resource
    * @template ParentResource the parent resource of the NspConfiguration
    * @template Request The request body type
-   * @template Response The success response for the read operation
-   * @template Resource the NspConfiguration resource being read
+   * @template Response The success response for the action operation
+   * @template Resource the NspConfiguration resource being acted on
    * @template BaseParameters Optional. Allows overriding the operation parameters
    * @template KeyName Optional. The NSP configuration resource name parameter. By default, this is `networkSecurityPerimeterConfigurationName`
    * @template Parameters Optional. Additional parameters after the path parameters
@@ -237,8 +237,8 @@ interface NspConfigurationOperations<
    * Perform an action on a network security perimeter configuration for a particular resource
    * @template ParentResource the parent resource of the NspConfiguration
    * @template Request The request body type
-   * @template Response The success response for the read operation
-   * @template Resource the NspConfiguration resource being read
+   * @template Response The success response for the action operation
+   * @template Resource the NspConfiguration resource being acted on
    * @template BaseParameters Optional. Allows overriding the operation parameters
    * @template KeyName Optional. The NSP configuration resource name parameter. By default, this is `networkSecurityPerimeterConfigurationName`
    * @template Parameters Optional. Additional parameters after the path parameters
