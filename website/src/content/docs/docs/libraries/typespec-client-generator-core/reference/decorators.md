@@ -730,7 +730,7 @@ suppression to acknowledge its experimental nature.
 See supported client options for each language emitter here https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/12clientOptions/
 
 **Warning**: This decorator always emits a warning that must be suppressed, and an additional
-warning if no scope is provided (since options are typically language-specific).
+[`decorator-requires-scope`](https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/diagnostics#decorator-requires-scope) warning if no scope is provided (since options are typically language-specific).
 
 ```typespec
 @Azure.ClientGenerator.Core.clientOption(name: valueof string, value: valueof unknown, scope?: valueof string)
@@ -766,6 +766,8 @@ model MyModel {
 Whether you want to generate an operation as a convenient method.
 When applied to a namespace or interface, it affects all operations within that scope unless explicitly overridden.
 
+**Note**: `@convenientAPI` only applies to Java and C# emitters. Always provide a `scope` of `"java"` or `"csharp"` (or both) to avoid a [`decorator-requires-scope`](https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/diagnostics#decorator-requires-scope) warning.
+
 ```typespec
 @Azure.ClientGenerator.Core.convenientAPI(flag?: valueof boolean, scope?: valueof string)
 ```
@@ -787,14 +789,14 @@ The target operation, namespace, or interface.
 ##### Apply to a single operation
 
 ```typespec
-@convenientAPI(false)
+@convenientAPI(false, "java")
 op test: void;
 ```
 
 ##### Apply to all operations in an interface
 
 ```typespec
-@convenientAPI(false)
+@convenientAPI(false, "java")
 interface MyOperations {
   test1(): void;
   test2(): void;
@@ -804,7 +806,7 @@ interface MyOperations {
 ##### Apply to all operations in a namespace
 
 ```typespec
-@convenientAPI(false)
+@convenientAPI(false, "java")
 namespace MyService {
   op test1(): void;
   op test2(): void;
@@ -982,6 +984,8 @@ model MyServiceClientOptions {
 Whether you want to generate an operation as a protocol method.
 When applied to a namespace or interface, it affects all operations within that scope unless explicitly overridden.
 
+**Note**: `@protocolAPI` only applies to Java and C# emitters. Always provide a `scope` of `"java"` or `"csharp"` (or both) to avoid a [`decorator-requires-scope`](https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/diagnostics#decorator-requires-scope) warning.
+
 ```typespec
 @Azure.ClientGenerator.Core.protocolAPI(flag?: valueof boolean, scope?: valueof string)
 ```
@@ -1003,14 +1007,14 @@ The target operation, namespace, or interface.
 ##### Apply to a single operation
 
 ```typespec
-@protocolAPI(false)
+@protocolAPI(false, "java")
 op test: void;
 ```
 
 ##### Apply to all operations in an interface
 
 ```typespec
-@protocolAPI(false)
+@protocolAPI(false, "java")
 interface MyOperations {
   test1(): void;
   test2(): void;
@@ -1020,7 +1024,7 @@ interface MyOperations {
 ##### Apply to all operations in a namespace
 
 ```typespec
-@protocolAPI(false)
+@protocolAPI(false, "java")
 namespace MyService {
   op test1(): void;
   op test2(): void;
