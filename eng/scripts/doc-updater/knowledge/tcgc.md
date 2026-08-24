@@ -292,3 +292,25 @@ namespace (@clientNamespace), naming (@clientName), overload, structure (@client
 ## Diagnostic Messages Externalized (July 2026)
 
 - Diagnostic message definitions were moved out of `src/lib.ts` into individual `src/diagnostics/<name>.md` files (loaded at build). Purely an authoring refactor; reference docs regenerate the same content. No user-facing doc action.
+
+## C# Naming Convention Linter Rules — batch 1 (Aug 2026)
+
+- Two rules added to `src/linter.ts` (in both the `all` ruleset and the `best-practices:csharp` ruleset): `csharp-model-suffix` and `csharp-use-standard-acronyms`. Sources: `src/rules/csharp-model-suffix.ts`, `src/rules/csharp-use-standard-acronyms.ts` with sibling `.md` explainer files; shared helpers in `src/rules/codefix-helpers.ts`.
+- `csharp-model-suffix`: C# model names should use `Config` (not `Options`, except client options), `Content` (not `Request`), `Result` (not `Response`). Checks the C#-resolved name and respects `@clientName(..., "csharp")` overrides.
+- `csharp-use-standard-acronyms`: standard acronym casing — initial set is `IP`, `DB`, `OS` (e.g. `IpAddress`→`IPAddress`, `CosmosDb`→`CosmosDB`). Respects `@clientName` overrides.
+- `reference/linter.md` is auto-generated and was already updated in the same source PR (#4867) — both rows present. No manual reference edit needed. There is NO per-rule page directory under the website; the `../rules/*.md` links in linter.md resolve to the package `src/rules/*.md` explainers, not website pages.
+- Linter rules do NOT need Spector coverage (Spector demonstrates positive wire-level generation, not lint conditions).
+
+## client-default-value-type-mismatch Diagnostic (Aug 2026)
+
+- New warning diagnostic (PR #5101). Emitted when the value passed to `@Azure.ClientGenerator.Core.Legacy.clientDefaultValue` does not match the target property/parameter type (e.g. string default on `int32`). When `@alternateType` is present, the default is validated against the alternate type instead. Message text lives in `src/diagnostics/client-default-value-type-mismatch.md`.
+- Suppressable via `#suppress "@azure-tools/typespec-client-generator-core/client-default-value-type-mismatch"`; the mismatched default is still applied to generated SDKs when suppressed.
+- Documented as a "Type Validation" subsection in howto `08types.mdx` under the `@clientDefaultValue` section (prose + illustrative `typespec` block; no `<ClientTabs>` needed for a validation note). Diagnostic-only — no Spector spec needed. Tests: `test/decorators/client-default-value.test.ts`.
+
+## verbatimModuleSyntax enabled (Aug 2026)
+
+- PR #5132 turned on `verbatimModuleSyntax` in typespec-client-generator-core, forcing type-only imports (`import type { ... }`) across many `src/` files. Purely a build/authoring change — NO user-facing doc or type-graph impact. Ignore these import-line churn diffs when scanning incremental changes.
+
+## SSE model sharing tests (Aug 2026)
+
+- PR #5116 added `test/methods/sse.test.ts` cases for a model shared between a streaming (`text/event-stream`) and a non-streaming response. Test-only; no doc/behavior change beyond existing SSE metadata docs in guideline.md.
