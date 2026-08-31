@@ -249,6 +249,23 @@ namespace (@clientNamespace), naming (@clientName), overload, structure (@client
 - Codefix helpers added in `src/rules/codefix-helpers.ts` are reusable by other rules:
   - `createAugmentDecoratorCodeFix(target, decoratorName, args?)` — appends an `@@`-augment decorator at the end of the SAME file as the target.
   - `createClientTspAugmentDecoratorCodeFix(target, decoratorName, program, args?)` — writes the augment decorator to `client.tsp` (creates imports/usings as needed, uses short refs when the namespace `using` is in scope, else FQN). Assumes `client.tsp` is imported via tspconfig.
+- Note: `codefix-helpers.ts` was later refactored to take a generic `Type` target (via `getTypeName`/`buildFqn`/`buildShortRef`) instead of `Model | ModelProperty`, so the same helpers now work for model-name rules too.
+
+### csharp-model-suffix (Aug 2026)
+
+- Warning rule (in `csharpRules` + general `rules`): flags C#-resolved **model names** that use discouraged suffixes. Recommends `Config` instead of `Options` (except client options), `Content` instead of `Request`, `Result` instead of `Response`. Respects `@clientName` overrides. Doc: `src/rules/csharp-model-suffix.md`.
+
+### csharp-use-standard-acronyms (Aug 2026)
+
+- Warning rule (in `csharpRules` + general `rules`): flags C#-resolved names that don't use standard acronym casing. Initial set: `IP`, `DB`, `OS` (e.g. `IpAddress` → `IPAddress`, `CosmosDb` → `CosmosDB`). Respects `@clientName` overrides. Doc: `src/rules/csharp-use-standard-acronyms.md`.
+
+- Both new C# rules had their `reference/linter.md` table rows and `src/rules/*.md` pages added by their own source PR — verify before adding. Only cross-cutting howto notes were left to add.
+
+## client-default-value-type-mismatch diagnostic (Aug 2026)
+
+- New warning: `@Legacy.clientDefaultValue(value)` value type must match the target property/parameter type; a mismatch (e.g. string default `"10"` on an `int32`) reports `client-default-value-type-mismatch`. When `@alternateType` is present, the default is validated against the alternate type instead. Implemented via an `onTargetFinish` hook in `$clientDefaultValue` (`src/decorators.ts`) using typekit `literal.create` + `type.isAssignableTo`.
+- Diagnostic doc lives in `src/diagnostics/client-default-value-type-mismatch.md` (added by the source PR; reference docs auto-list it). Suppressing keeps the mismatched default in generated SDKs.
+- Documented in howto `08types.mdx` under "Client Default Values (Legacy)" → new "Type Validation" subsection (plain `typespec` example, no `<ClientTabs>` — this is a validation-error note, not generated SDK output).
 
 ## doc-updater Mechanics
 
