@@ -673,6 +673,37 @@ model Config {
 </ClientTabItem>
 </ClientTabs>
 
+### Value Type Must Match the Property Type
+
+The type of the value passed to `@clientDefaultValue` must match the type of the property or parameter it is applied to. If it does not (for example, a string default on a numeric property), TCGC emits the `client-default-value-type-mismatch` warning:
+
+```text
+Client default value type "string" does not match property type "int32". The default value type should match the property type.
+```
+
+To fix the warning, use a default value whose type matches the target type:
+
+```typespec
+model RequestOptions {
+  @Azure.ClientGenerator.Core.Legacy.clientDefaultValue(10)
+  pageSize?: int32;
+
+  @Azure.ClientGenerator.Core.Legacy.clientDefaultValue("asc")
+  sortOrder?: string;
+}
+```
+
+When [`@alternateType`](#using-alternatetype-to-reference-external-types) is applied to the same target, the default value is validated against the alternate type instead of the original type. This lets you keep a mismatched default value valid by changing the client-facing type:
+
+```typespec
+@Azure.ClientGenerator.Core.Legacy.clientDefaultValue("10")
+@Azure.ClientGenerator.Core.alternateType(string)
+@query
+pageSize?: int32; // no warning — the default matches the alternate type
+```
+
+If the mismatch is intentional, suppress the diagnostic with `#suppress`. The mismatched default value is still applied to generated SDKs when suppressed.
+
 ## Models
 
 ### Models with additional properties of any type

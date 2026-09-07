@@ -6,7 +6,15 @@
 - The `tspd` tool for regenerating reference docs requires the core submodule to be built first (`git submodule update --init && cd core && pnpm install && pnpm build`).
 - To regenerate reference docs: `cd packages/typespec-client-generator-core && pnpm regen-docs`.
 - To build azure-http-specs: `cd packages/azure-http-specs && pnpm build && pnpm validate-mock-apis`.
-- `pnpm` is not pre-installed globally; install with `npm install -g pnpm`.
+- `pnpm` is not pre-installed globally. `corepack pnpm ...` works, but nested build scripts (e.g. the compiler's `build` script) call a bare `pnpm` that must be on `PATH`. Create a shim: write a `pnpm` script that does `exec corepack pnpm "$@"`, `chmod +x`, and prepend its dir to `PATH`. Without this the compiler build fails with `sh: 1: pnpm: not found`.
+- To run `pnpm regen-docs`, three things must be built first, in order: (1) `core/packages/tspd` (needs `core/packages/compiler` built and its `@typespec/compiler` symlink present), (2) `core/packages/compiler` (`cd core/packages/compiler && pnpm build`), and (3) the TCGC package and its deps (`pnpm -r --filter "@azure-tools/typespec-client-generator-core..." build`). A checkout may report `core built` while `core/packages/compiler/dist/src/index.js` is actually missing — verify that file exists rather than trusting the `dist/` dir presence.
+- regen-docs output only changes `linter.md`, `decorators.md`, `data-types.md`, `emitter.md`, `js-api/` under `reference/`. Per-rule pages (`reference/rules/*.md`) and diagnostics are NOT emitted into the website by tspd; they are rendered at astro build time from the package's `src/rules/*.md` and `src/diagnostics/*.md`. So new lint rules/diagnostics need no manual website page — only their `src/**/*.md` files and, for rules, listing in `linter.md` (auto-generated).
+
+## Linter Rules & Diagnostics
+
+- Lint rules live in `src/rules/`. Each rule has a `.ts` (logic) and `.md` (reference doc rendered at build). Register new rules in `src/linter.ts` in both the `rules` array and, if C#-specific, the `csharpRules` array. `linter.md` reference lists them (regen-docs).
+- Current rules: `require-client-suffix`, `property-name-conflict`, `csharp-no-url-suffix`, `csharp-model-suffix` (Options→Config/Request→Content/Response→Result C# suffix conventions; skips `*ClientOptions` and standard Azure.Core error responses), `csharp-use-standard-acronyms` (C# acronym casing).
+- Diagnostics are declared in `src/lib.ts` with a matching `src/diagnostics/<code>.md` reference doc. `client-default-value-type-mismatch` (warning) fires from `@Legacy.clientDefaultValue` when the default value's type doesn't match the target property/parameter type; when `@alternateType` is present the value is validated against the alternate type instead. Documented in howto `08types.mdx` under Client Default Values.
 
 ## Decorator Catalog
 
