@@ -124,3 +124,18 @@ The library provides an experimental **Agent** base type in `lib/base-types/agen
 - How-to guide added: `website/src/content/docs/docs/howtos/ARM/agent-base-type.mdx`.
 - The ARM howtos sidebar is auto-generated from the directory (`current-sidebar.ts` → `autogenerate` on `howtos`), so new how-to files need no manual sidebar registration.
 - Reference docs (`reference/*.md`) for these lib additions were already regenerated in-commit; no `regen-docs` diff was needed for this batch.
+
+## Relationship Base Type (Experimental)
+
+`lib/base-types/relationship.tsp` (namespace `Azure.ResourceManager.BaseTypes.Relationships`, imported from `arm.tsp`) adds:
+
+- `RelationshipProperties<ProvisioningState extends string = ResourceProvisioningState>` — required property bag with read-only `baseTypes: BaseTypeInfo[]`, `sourceId`, `sourceTenant`, `targetId`, `targetTenant`, and read-only `provisioningState?`.
+- `Relationship<Properties extends RelationshipProperties = RelationshipProperties>` — an `ExtensionResource` template that applies `@azureBaseType(#{ baseType: BaseType.Relationship, version: "2026-04-01" })` automatically.
+- Linter rule `use-relationship-required-properties` (registered in `src/linter.ts`): a Relationship base-type resource must be an extension resource that uses the required Relationship schema.
+- Canonical sample: `packages/samples/specs/resource-manager/resource-types/relationship/main.tsp`. No dedicated how-to exists yet (only the agent base type has one); do not fabricate one.
+
+## Gotchas from incremental batches
+
+- The Agent base type `version` in `@azureBaseType` moved from `2024-06-01` to `2026-04-01`. Grep the how-to (`agent-base-type.mdx`) for hard-coded versions — the direct-decorator example must track the source default.
+- Agent model rename: `ConversationItem` → `InputItem`; message `content` changed from `string` to `Record<unknown>`. `ConversationProperties` and `ResponseProperties` now require an `input: InputItem`. If reference docs still show `ConversationItem`, run `regen-docs`.
+- When `mise` is unavailable, `corepack pnpm` provides the pinned pnpm; nested build scripts call bare `pnpm`, so put a `pnpm` shim dir on `PATH` (a script doing `exec corepack pnpm "$@"`) before running `pnpm -r ... build`.
