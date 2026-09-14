@@ -124,3 +124,18 @@ The library provides an experimental **Agent** base type in `lib/base-types/agen
 - How-to guide added: `website/src/content/docs/docs/howtos/ARM/agent-base-type.mdx`.
 - The ARM howtos sidebar is auto-generated from the directory (`current-sidebar.ts` → `autogenerate` on `howtos`), so new how-to files need no manual sidebar registration.
 - Reference docs (`reference/*.md`) for these lib additions were already regenerated in-commit; no `regen-docs` diff was needed for this batch.
+
+## Relationship Base Type (Experimental)
+
+The library provides an experimental **Relationship** base type in `lib/base-types/relationship.tsp` (namespace `Azure.ResourceManager.BaseTypes.Relationships`, imported from `arm.tsp`). Key facts:
+
+- `Relationship<Properties extends RelationshipProperties = RelationshipProperties>` is an **ExtensionResource** template that applies `@azureBaseType(#{ baseType: BaseType.Relationship, version: "2026-04-01" })` automatically. Relationships are always extension resources (they attach to an arbitrary source scope).
+- `RelationshipProperties<ProvisioningState extends string = ResourceProvisioningState>` defines the required schema: `baseTypes` (read-only, ARM-managed), `sourceId`, `sourceTenant`, `targetId`, `targetTenant`, and read-only `provisioningState`. Derive RP-specific property models from it.
+- Linting rule `use-relationship-required-properties` (registered in `src/linter.ts`) enforces that a Relationship-base-type resource is an extension resource whose properties derive from `RelationshipProperties`.
+- Operations use the `Extension.*` templates (`Extension.Read`, `Extension.CreateOrReplaceAsync`, `Extension.CustomPatchAsync`, `Extension.DeleteWithoutOkAsync`, `Extension.ListByTarget`) over an `Extension.ScopeParameter`.
+- Canonical sample: `packages/samples/specs/resource-manager/resource-types/relationship/main.tsp`.
+- How-to guide added: `website/src/content/docs/docs/howtos/ARM/relationship-base-type.mdx`.
+
+## Base Type Versions
+
+The current base-type descriptor version is `"2026-04-01"` (updated from the earlier `"2024-06-01"`). When updating examples that call `@azureBaseType(#{ baseType, version })`, use `"2026-04-01"`. A stale `"2024-06-01"` string lingered in `agent-base-type.mdx` and was corrected.
