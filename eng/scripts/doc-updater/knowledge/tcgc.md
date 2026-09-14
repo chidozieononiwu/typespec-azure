@@ -292,3 +292,22 @@ namespace (@clientNamespace), naming (@clientName), overload, structure (@client
 ## Diagnostic Messages Externalized (July 2026)
 
 - Diagnostic message definitions were moved out of `src/lib.ts` into individual `src/diagnostics/<name>.md` files (loaded at build). Purely an authoring refactor; reference docs regenerate the same content. No user-facing doc action.
+
+## client-default-value-type-mismatch Diagnostic (Sept 2026)
+
+- New `warning` diagnostic added in `src/lib.ts` + `src/diagnostics/client-default-value-type-mismatch.md`. `$clientDefaultValue` now returns an `onTargetFinish` hook that builds a literal from the value and checks `isAssignableTo` against the property type (or the `@alternateType` if one is set, respecting scope). Fires when e.g. a string default is applied to a numeric property.
+- Message: `Client default value type "<valueType>" does not match property type "<propertyType>".` `valueType` label maps `number`→`numeric`.
+- Suppressible with `#suppress`; the mismatched default is still applied when suppressed.
+- Documented as a "Default Value Type Matching" subsection in howto `08types.mdx` (right after the clientDefaultValue Language-Specific Scoping section). No Spector spec needed (diagnostic/validation, not wire-level generation).
+
+## csharp-model-suffix + csharp-use-standard-acronyms Linter Rules (Sept 2026)
+
+- Two new C#-scoped warning rules registered in `src/linter.ts` (added to BOTH `rules` and `csharpRules`).
+  - `csharp-model-suffix`: recommends model-name suffixes for C# SDKs — `Config` over `Options` (except client options), `Content` over `Request`, `Result` over `Response`. Checks the C#-resolved name, respects `@clientName`. Codefix writes `@@clientName(..., "csharp")`.
+  - `csharp-use-standard-acronyms`: enforces standard acronym casing in C# SDK names.
+- Reference `reference/linter.md` table is auto-generated and was already updated at checkout (source PR regenerated it). `src/rules/<name>.md` files are the authoritative rule docs. No website `rules/` dir exists in the tree — those pages are produced at website build time from `src/rules/*.md` via `tspd --llmstxt --rules-dir`. Do not hand-create them.
+- `codefix-helpers.ts` was generalized from `Model | ModelProperty` to `Type` (uses `getTypeName`, handles `UnionVariant`), so codefixes now work for more target kinds.
+
+## Type-only Import Refactor (Sept 2026)
+
+- A large commit converted many `src/*.ts` imports to `import type { ... }` (type-only imports) across ~25 files with symmetric +/- counts. Purely a lint/style refactor — NO behavior or type-graph change, NO doc impact. Recognize these by equal add/delete counts and `import type` churn; skip them.
