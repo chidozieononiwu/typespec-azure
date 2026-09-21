@@ -292,3 +292,21 @@ namespace (@clientNamespace), naming (@clientName), overload, structure (@client
 ## Diagnostic Messages Externalized (July 2026)
 
 - Diagnostic message definitions were moved out of `src/lib.ts` into individual `src/diagnostics/<name>.md` files (loaded at build). Purely an authoring refactor; reference docs regenerate the same content. No user-facing doc action.
+
+## C# Best-Practices Linter Rules (Sept 2026)
+
+- Two new C# naming rules were added to `src/linter.ts`: `csharp-model-suffix` and `csharp-use-standard-acronyms`, joining `property-name-conflict`, `csharp-no-url-suffix`, and `require-client-suffix`. The four `csharp-*`/`property-name-conflict` rules are grouped into the `best-practices:csharp` ruleSet; `require-client-suffix` is only in the top-level `all` set.
+- `csharp-model-suffix`: recommends `Config`→`Options` (except client options), `Content`→`Request`, `Result`→`Response`. `csharp-use-standard-acronyms`: enforces `IP`/`DB`/`OS` casing. Both check the C#-resolved name and respect `@clientName(..., "csharp")` overrides.
+- Each rule ships its own authored `src/rules/<name>.md` and the auto-generated `reference/linter.md` table row — these arrive already updated at checkout (see incremental-diff lesson). No howto change: consistent with existing precedent, TCGC linter rules live only in reference docs, not in `<ClientTabs>` howto pages. No Spector coverage (positive wire-level generation only).
+
+## client-default-value-type-mismatch Diagnostic (Sept 2026)
+
+- New diagnostic emitted when the value passed to Legacy `@clientDefaultValue` does not match the target property type (e.g. string default on `int32`). When `@alternateType` is present, the default is validated against the alternate type instead. Authored in `src/diagnostics/client-default-value-type-mismatch.md`; wired via `src/lib.ts` and validated in `src/decorators.ts`. Diagnostic-only — no user-facing howto or Spector action.
+
+## Type-only import refactor (Sept 2026)
+
+- A large cross-file commit converted many imports to `import type {...}` across `src/` (interfaces.ts, types.ts, methods.ts, package.ts, clients.ts, etc.). Purely a lint/type refactor with no type-graph or behavior change — ignore for documentation purposes.
+
+## SSE shared-model usage edge case (Sept 2026)
+
+- `test/methods/sse.test.ts` added a case where one model is used as BOTH a regular (non-streaming) response body and a `@terminalEvent` SSE event: it correctly receives combined `UsageFlags.Output | UsageFlags.Json`, and SSE-only event models get the same. This is expected usage-propagation behavior already covered by the existing guideline.md "Streaming and Server-Sent Events" section — no doc change needed.
