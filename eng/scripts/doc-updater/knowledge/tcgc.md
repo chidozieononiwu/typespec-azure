@@ -292,3 +292,20 @@ namespace (@clientNamespace), naming (@clientName), overload, structure (@client
 ## Diagnostic Messages Externalized (July 2026)
 
 - Diagnostic message definitions were moved out of `src/lib.ts` into individual `src/diagnostics/<name>.md` files (loaded at build). Purely an authoring refactor; reference docs regenerate the same content. No user-facing doc action.
+
+## C# Model Naming Rules Added (Sept 2026)
+
+- Two new C# best-practice linter rules were added in `src/rules/` and registered in `src/linter.ts`, and already appear in `reference/linter.md` (regen-docs already run — do NOT re-add):
+  - `csharp-model-suffix` — C# model names should use recommended suffixes: `Config` instead of `Options` (except client options), `Content` instead of `Request`, `Result` instead of `Response`. Checks the C#-resolved name and respects `@clientName` overrides. Severity: warning.
+  - `csharp-use-standard-acronyms` — C# SDK names should use standard acronym casing.
+- Rule doc bodies live in `src/rules/<name>.md`; the auto-generated `reference/rules/<name>.md` pages are produced by regen-docs.
+
+## client-default-value-type-mismatch Diagnostic (Sept 2026)
+
+- New diagnostic `client-default-value-type-mismatch` raised by `$clientDefaultValue` in `src/decorators.ts` when the value type passed to `@Azure.ClientGenerator.Core.Legacy.clientDefaultValue` does not match the target property/parameter type (e.g. string default on `int32`). Doc body in `src/diagnostics/client-default-value-type-mismatch.md`.
+- When `@alternateType` is present on the same property, the default value is validated against the alternate type instead of the original property type.
+- Documented in howto `08types.mdx` under the `@clientDefaultValue` section ("Value Type Must Match the Property Type") — plain prose note, no `<ClientTabs>` needed.
+
+## Non-user-facing commits (Sept 2026 batch)
+
+- A large commit touching most of `src/` and `test/` was a mechanical `import type` (type-only imports) refactor — no behavior or doc changes. Don't waste time auditing docs for such refactors.

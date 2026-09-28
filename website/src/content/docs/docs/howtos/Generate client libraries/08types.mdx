@@ -673,6 +673,16 @@ model Config {
 </ClientTabItem>
 </ClientTabs>
 
+### Value Type Must Match the Property Type
+
+The value passed to `@clientDefaultValue` must match the type of the property or parameter it is applied to. Applying a string default to a numeric property (or vice versa) reports the `client-default-value-type-mismatch` diagnostic:
+
+```text
+Client default value type "string" does not match property type "int32". The default value type should match the property type.
+```
+
+For example, `@Azure.ClientGenerator.Core.Legacy.clientDefaultValue("10")` on an `int32` property is invalid — use `@Azure.ClientGenerator.Core.Legacy.clientDefaultValue(10)` instead. When `@alternateType` is applied to the same property, the default value is validated against the alternate type rather than the original property type.
+
 ## Models
 
 ### Models with additional properties of any type
