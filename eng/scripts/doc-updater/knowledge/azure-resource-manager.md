@@ -124,3 +124,28 @@ The library provides an experimental **Agent** base type in `lib/base-types/agen
 - How-to guide added: `website/src/content/docs/docs/howtos/ARM/agent-base-type.mdx`.
 - The ARM howtos sidebar is auto-generated from the directory (`current-sidebar.ts` → `autogenerate` on `howtos`), so new how-to files need no manual sidebar registration.
 - Reference docs (`reference/*.md`) for these lib additions were already regenerated in-commit; no `regen-docs` diff was needed for this batch.
+
+## Relationship Base Type (Experimental)
+
+The library provides an experimental **Relationship** base type in `lib/base-types/relationship.tsp` (namespace `Azure.ResourceManager.BaseTypes.Relationships`). Key facts:
+
+- `Relationship<Properties>` is an `ExtensionResource` template that applies `@azureBaseType(#{ baseType: BaseType.Relationship, version: ... })` automatically. A relationship is always an extension resource attached to a source scope.
+- `RelationshipProperties<ProvisioningState extends string = ResourceProvisioningState>` is the required property bag. Required fields: `baseTypes` (read-only, ARM-managed), `sourceId`, `sourceTenant`, `targetId`, `targetTenant`, and read-only `provisioningState`. Derive RP property models with `is RelationshipProperties<...>`.
+- The `use-relationship-required-properties` rule fires when a resource claims the Relationship base type via `@azureBaseType` but is not an extension resource conforming to `RelationshipProperties`.
+- Applying `@azureBaseType` in a non-`Azure.ResourceManager` namespace still emits `basetypes-experimental`; user specs must `#suppress "@azure-tools/typespec-azure-resource-manager/basetypes-experimental" "..."`.
+- `BaseType` union (in `base-types.tsp`) now includes `Relationship: "Relationship"` alongside `Agent`.
+- Relationship operations use the `Extension.*` templates (`Extension.Read`, `Extension.CreateOrReplaceAsync`, `Extension.CustomPatchAsync`, `Extension.DeleteWithoutOkAsync`, `Extension.ListByTarget`) parameterized by a `Scope extends Foundations.SimpleResource`, with the concrete interface extending `...<Extension.ScopeParameter>`.
+- Canonical sample: `packages/samples/specs/resource-manager/resource-types/relationship/main.tsp`.
+- How-to guide added: `website/src/content/docs/docs/howtos/ARM/relationship-base-type.mdx`.
+
+## Linter Rule Renames (core-operations split)
+
+The monolithic `core-operations.ts` rule was removed and split into three separately registered rules in `src/linter.ts`:
+
+- `use-interface` (`use-interface.ts`) — resource operations must be inside an interface. Replaces the old core `use-interface`/`operation-interface` check.
+- `use-api-version` (`use-api-version.ts`) — operations must include the api-version parameter referencing `Azure.ResourceManager.CommonTypes.ApiVersionParameter`.
+- `use-operation-decorator` (`use-operation-decorator.ts`) — operations must use the correct decorator for the HTTP verb (e.g. POST must be `@armResourceAction`).
+
+The `reference/linter.md` (auto-generated) and the how-to tables in `howtos/ARM/arm-rules.md` and `howtos/ARM/rpc-guidelines-coverage.md` already reference the new rule names; there is no separate manually-maintained `rules/` directory anymore (linter.md links to `../rules/*.md` which are generated).
+
+Many `src/rules/*.md` sidecar description files were added/renamed in this batch (they back the linter reference), and several rule files were renamed (e.g. `arm-delete-response-codes.ts` → doc `arm-delete-operation-response-codes.md`). These are source-side; reference docs are regenerated via `pnpm regen-docs`.
